@@ -11,16 +11,16 @@ public class DeserializationServlet extends HttpServlet {
         try {
             byte[] serializedData = request.getInputStream().readAllBytes();  // User-provided input
 
-            // Vulnerability: Deserialization of untrusted data
-            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(serializedData));
-            Object obj = ois.readObject();
-            ois.close();
-
-            response.getWriter().println("Deserialized object: " + obj.toString());
+            // Security fix (analysis):
+            // Do not perform Java native deserialization on untrusted network input (prevents CWE-502 RCE)
+            // and avoid reflecting deserialized content back to the client (prevents CWE-79 XSS).
+            // Instead, reject arbitrary serialized payloads and return a safe, plain-text message.
+            response.setContentType("text/plain;charset=UTF-8");
+            response.getWriter().println("Deserialization of arbitrary Java objects from untrusted input is not supported.");
         } catch (Exception e) {
             e.printStackTrace();
             response.getWriter().println("Error: " + e.getMessage());
-        }
+
     }
 }
 
